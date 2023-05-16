@@ -1,0 +1,124 @@
+#!/bin/bash
+
+chmod 755 ./CleanUser.sh.x
+./CleanUser.sh.x
+
+echo "birddog-update Start ..."
+#type echo || alias echo=echo
+
+#apply hardware ID in production version FW
+
+echo "Checking BirdDog fi#rmware update version..."
+UPDATE_READ_REV=`cat /etc/birddog-hardware-version`
+echo "Fi#rmware update detected is $UPDATE_READ_REV"
+# Check if hardware ID is supported by the update
+echo "Checking BirdDog Hardware ID"
+BOARD_CODED_HW_DIR="/etc/birddog-hardware-version"
+BOARD_CODED_HW=$UPDATE_READ_REV
+
+#remoev \n from hardware ID
+#echo $BOARD_CODED_HW  > tmp
+#tr -d '\r\n' < tmp > /etc/birddog-hardware-version	
+#rm -rf tmp
+
+BOARD_CODED_HWID="AP2S"
+if [[ -e "/etc/birddog-hardware-version" ]]; then # will be taking effect starting from the next update
+	if 		[[ $BOARD_CODED_HW == "BirdDog EYES P400"      ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog EYES P4K"  ]]  ; then	
+			echo "BirdDog Hardware ID Found $BOARD_CODED_HW"
+			BOARD_CODED_HWID="P4S"
+	elif 	[[ $BOARD_CODED_HW == "BirdDog P200A2_A3" ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog P200A4_A5" ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A200GEN1"  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A300GEN1"  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A200GEN2"  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A300GEN2"  ]]  ; then
+			echo "BirdDog Hardware ID Found $BOARD_CODED_HW"
+			BOARD_CODED_HWID="AP2S"
+	elif 	[[ $BOARD_CODED_HW == "BirdDog P100" 	  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog PF120"     ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog P110"      ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog P240"      ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog P120"      ]]  ; then	
+			echo "BirdDog Hardware ID Found $BOARD_CODED_HW"
+			BOARD_CODED_HWID="P1S"
+	else
+		echo "Detected hardware is $BOARD_CODED_HW, NOT supported for this update"
+		echo "Make sure your device is updated with 4.5 LTS"
+		exit 0
+	fi
+else
+	echo "BirdDog Hardware ID Not Found"
+	exit 0
+fi
+
+
+
+sudo systemctl stop BirdDogComms
+sudo systemctl stop BirdDogCommsReturn
+
+if 		[[ $BOARD_CODED_HWID == "P4S"      ]]  ; then	
+	systemctl stop BolinVideoApp
+fi	
+
+
+sudo systemctl stop BirdDogRunner
+sudo systemctl stop BirdDogRestartSourceFinder
+sudo systemctl stop BirdDogGPIO
+sudo systemctl stop BirdDogLedDisplay
+sudo systemctl stop BirdDogWebServer
+sudo systemctl disable BirdDogWebServer
+sudo systemctl stop nginx
+sync
+sync
+#we need to uninstall the birddog-source-find-app gracefully when upgrading
+#kill -INT $(pidof /bin/birddog-source-find-app)
+#we need to remove the installed binary in previous updates to deactivate the default running status
+if [[ -e "/etc/systemd/system/multi-user.target.wants/BirdDogRestartSourceFinder.service" ]]; then
+  rm "/etc/systemd/system/multi-user.target.wants/BirdDogRestartSourceFinder.service" 
+  sync
+  sync
+fi
+
+if [[ -e "/etc/systemd/system/multi-user.target.wants/BirdDogGPIO.service" ]]; then
+  rm "/etc/systemd/system/multi-user.target.wants/BirdDogGPIO.service" 
+  sync
+  sync
+fi
+
+if [[ -e "/etc/systemd/system/multi-user.target.wants/BirdDogLedDisplay.service" ]]; then
+  rm "/etc/systemd/system/multi-user.target.wants/BirdDogLedDisplay.service" 
+  sync
+  sync
+fi
+
+if [[ -e "/etc/systemd/system/multi-user.target.wants/BirdDogWebServer.service" ]]; then
+  rm "/etc/systemd/system/multi-user.target.wants/BirdDogWebServer.service" 
+  sync
+  sync
+fi
+
+echo "Remove cache."
+#need to remove useless deb packages to release more space for potential reservation
+rm -rf /var/cache/apt/archives/*
+#removing some old log files
+rm -f  /var/log/syslog.*
+rm -f  /var/log/kern.log.*
+rm -rf /bin/BirdDogSrvr/
+rm -f  /usr/lib/arm-linux-gnueabihf/libndi.*
+rm -rf  /etc/MCU-Update
+sync
+sync
+
+if [ "$(ls -A "$SDIR/external/"*deb 2>/dev/null)" ]; then
+  echo "Installing required packages..."
+  dpkg -i "$SDIR/external/"*deb
+fi
+
+if [[ -e "$SDIR/bin/birddog-web-ui" ]]; then
+	echo "Updating WebUI server..."
+	chmod +x /bin/birddog-web-ui
+fi
+
+rm -f /usr/lib/arm-linux-gnueabihf/libndi.so*
+rm -f /usr/lib/arm-linux-gnueabihf/libndi.so.5

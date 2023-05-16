@@ -1,0 +1,170 @@
+#!/bin/bash
+
+
+BOARD_CODED_HW=`cat /etc/birddog-hardware-version`
+
+BOARD_CODED_HWID="AP2S"
+
+if [[ -e "/etc/birddog-hardware-version" ]]; then # will be taking effect starting from the next update
+	if 	[[ $BOARD_CODED_HW == "BirdDog EYES P400" ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog EYES P4K"  ]]  ; then	
+			echo "BirdDog Hardware ID Found $BOARD_CODED_HW"
+			BOARD_CODED_HWID="P4S"
+	elif 	[[ $BOARD_CODED_HW == "BirdDog P200A2_A3" ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog P200A4_A5" ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A200GEN1"  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A300GEN1"  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A200GEN2"  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A300GEN2"  ]]  ; then
+			echo "BirdDog Hardware ID Found $BOARD_CODED_HW"
+			BOARD_CODED_HWID="AP2S"
+	elif 	[[ $BOARD_CODED_HW == "BirdDog P100" 	  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog PF120"     ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog P110"      ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog P240"      ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog P120"      ]]  ; then	
+			echo "BirdDog Hardware ID Found $BOARD_CODED_HW"
+			BOARD_CODED_HWID="P1S"
+	else
+		echo "Detected hardware is $BOARD_CODED_HW, NOT supported for this update"
+		echo "Make sure your device is updated with 4.5 LTS"
+		exit 0
+	fi
+else
+	echo "BirdDog Hardware ID Not Found"
+	exit 0
+fi
+
+
+UPDATE_READ_REV=`cat /etc/birddog-firmware-version-common`
+NEW_FW_VER="$BOARD_CODED_HW $UPDATE_READ_REV" 
+echo -n  $NEW_FW_VER > /etc/birddog-firmware-version
+
+echo -n "Firmware update detected is $NEW_FW_VER "
+
+# Disable sil2 in P400 or P4K
+if 		[[ $BOARD_CODED_HWID == "P4S"      ]]  ; then	
+	echo '{"Silicon2":"false","Srt":"false","Hx":"false","Rtsp":"false","Rtmp":"false","Disable":"false","Dante":"false","IsInterlaceModeSupported": false, "ScreenSaverRawH264Path": "/etc/ndi_screen_saver_h264_raw_iframe.h264"}' > /etc/Config.json
+fi
+
+echo "Copy Lib."
+sudo ln -s /usr/lib/arm-linux-gnueabihf/libndi.so.5.5.2 /usr/lib/arm-linux-gnueabihf/libndi.so.5
+sudo ln -s /usr/lib/arm-linux-gnueabihf/libndi.so.5 /usr/lib/arm-linux-gnueabihf/libndi.so
+sudo chmod 755 /bin/CamApp
+sudo chmod 755 /bin/birddog*
+sudo chmod 755 /bin/bdg_headset_speaker
+sudo chmod 755 /bin/mcu*
+sudo chmod 755 /bin/ndi*
+sudo chmod 755 /bin/BirdDogSrvr/*
+sudo chmod 755 /root/app
+sudo chmod 755 /etc/rc.local
+
+sync
+sync
+
+
+#-----For Studio R4 and MINI, adding camera 7 on 9/07/2019 we need to update QSPI binary to extend a feature of automatic EMMC factory re-image-----#
+#-----it takes extremely long to upgrade QSPI, up to 5 minutes, begin-----------#
+QSPI_RECORD="/etc/qspi-update-record"
+
+QSPI_FW_REV="/tmp/bdstum05r4cam7d27feb2020.bin"
+if 		[[ $BOARD_CODED_HWID == "P4S"      ]]  ; then	
+	QSPI_FW_REV="/tmp/bdp4k06d04jun2020.bin" #reflashing part slightly modified based on latest common bdstum05r4cam7d27feb2020.bin
+fi	
+
+QSPI_RECORD_CONTENT="none"
+QSPI_RECORD_CONTENT=`cat ${QSPI_RECORD}`
+if [[ ! -e $QSPI_RECORD ]] || [[ $QSPI_RECORD_CONTENT != $QSPI_FW_REV ]]; then
+  echo "**************************************************************************************"
+	echo "***************************************Firmware Update in progress********************"
+  echo "***************************************Donot power cycle******************************"
+  echo "***********  It might take some time (5 minutes), please wait ************************"
+	echo "**************************************************************************************"
+	dd if=$QSPI_FW_REV of=/dev/mtdblock0 bs=1M
+	echo "Boot updating is done successfully"
+	#factory revision is bdstum01r4d10jul2018.bin
+	echo $QSPI_FW_REV > ${QSPI_RECORD}
+fi
+#-----it takes extremely long to upgrade QSPI, up to 5 minutes, end-------------#
+
+echo "Setting default systemd target..."
+sudo systemctl set-default multi-user.target
+
+echo "Syncing file systems..."
+
+if 		[[ $BOARD_CODED_HWID == "P4S"      ]]  ; then	
+	sudo systemctl enable BolinVideoApp
+fi
+
+if [[ -e $BOARD_CODED_HW_DIR ]]; then # will be taking effect starting from the next update
+	if 		[[ $BOARD_CODED_HW == "BirdDog A200GEN1"  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A300GEN1"  ]]  ; then
+				cat /etc/FPGA/pangu_A200.bit > /dev/xdevcfg	#now safe to reload the bitstream		
+				while [ $(cat /sys/devices/soc0/amba/f8007000.devcfg/prog_done) -ne	1 ];
+				do
+					echo "bitstream reloading in progress"
+					sleep 0.5
+				done	
+				echo "bitstream reloaded successfully"	
+	elif 	[[ $BOARD_CODED_HW == "BirdDog P100" 	  ]]  ; then
+				cat /etc/FPGA/pangu_P100.bit > /dev/xdevcfg	#now safe to reload the bitstream		
+				while [ $(cat /sys/devices/soc0/amba/f8007000.devcfg/prog_done) -ne	1 ];
+				do
+					echo "bitstream reloading in progress"
+					sleep 0.5
+				done	
+				echo "bitstream reloaded successfully"	
+	elif	[[ $BOARD_CODED_HW == "BirdDog P110"      ]]  || \
+	  	    [[ $BOARD_CODED_HW == "BirdDog P120"      ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog PF120"     ]]  ; then	
+				cat /etc/FPGA/pangu_P110.bit > /dev/xdevcfg	#now safe to reload the bitstream		
+				while [ $(cat /sys/devices/soc0/amba/f8007000.devcfg/prog_done) -ne	1 ];
+				do
+					echo "bitstream reloading in progress"
+					sleep 0.5
+				done	
+				echo "bitstream reloaded successfully"						
+	elif 	[[ $BOARD_CODED_HW == "BirdDog P200A4_A5" ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog P200A2_A3" ]]  || \
+	  	    [[ $BOARD_CODED_HW == "BirdDog A200GEN2"  ]]  || \
+			[[ $BOARD_CODED_HW == "BirdDog A300GEN2"  ]]  ; then
+				cat /etc/FPGA/pangu_P200.bit > /dev/xdevcfg	#now safe to reload the bitstream		
+				while [ $(cat /sys/devices/soc0/amba/f8007000.devcfg/prog_done) -ne	1 ];
+				do
+					echo "bitstream reloading in progress"
+					sleep 0.5
+				done	
+				echo "bitstream reloaded successfully"							
+	elif 	[[ $BOARD_CODED_HW == "BirdDog P240"  ]]  ; then
+				echo "Config FPGA with P110 bitstream..."
+				cat /etc/FPGA/pangu_P240.bit > /dev/xdevcfg	#now safe to reload the bitstream		
+						
+				while [ $(cat /sys/devices/soc0/amba/f8007000.devcfg/prog_done) -ne	1 ];
+				do
+					echo "bitstream reloading in progress"
+					sleep 0.5
+				done	
+				echo "bitstream reloaded successfully"			
+	fi
+fi
+
+	
+sudo /bin/mcu_update -updater
+echo "/bin/mcu_update -updater done"
+wait
+
+
+systemctl enable BirdDogRunner
+sync
+sync
+echo "systemctl enable BirdDogRunner done"		
+
+rm -f /tmp/bd*.bin
+
+echo "**************************************************************************************"
+echo "**************************************************************************************"
+echo "**************Installed successfully, rebooting the system."
+echo "**************************************************************************************"
+echo "**************************************************************************************"
+
+/bin/birddog-reboot-request
