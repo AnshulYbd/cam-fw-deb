@@ -46,15 +46,14 @@ if [ $2 == "dpkgon" ];then
     mkdir -p $DEB_SOURCE_PATH && cp -rf $BIRDDOG_PLATFORM_FILES_PATH/* $_
     cp -r $PROJECT_ROOT/DEBIAN $DEB_SOURCE_PATH
     echo "Preparing  debian file system."
-    echo "Package: BirdDog-Firmware
-    Version: $Version
-    Section: frimware
-    Priority: optional
-    Architecture: armhf
-    Maintainer: Anshul Yadav (anshuly@birddog.tv)
-    Description: This is Bird dog camera firmware.
-    " > $DEB_SOURCE_PATH/DEBIAN/control
-    
+    echo "Package: BirdDog-Firmware" > $DEB_SOURCE_PATH/DEBIAN/control
+    echo "Version: $Version" >>$DEB_SOURCE_PATH/DEBIAN/control
+    echo "Section: frimware" >>$DEB_SOURCE_PATH/DEBIAN/control
+    echo "Priority: optional" >>$DEB_SOURCE_PATH/DEBIAN/control
+    echo "Architecture: armhf" >>$DEB_SOURCE_PATH/DEBIAN/control
+    echo "Maintainer: Anshul Yadav (anshuly@birddog.tv)" >>$DEB_SOURCE_PATH/DEBIAN/control
+    echo "Description: This is Bird dog camera firmware." >>$DEB_SOURCE_PATH/DEBIAN/control    
+       
     #create and copy all temp mcu bin and etc
     mkdir -p $DEB_SOURCE_PATH/tmp && cp -f $DEB_ROOT_PATH/external/* $_
     
