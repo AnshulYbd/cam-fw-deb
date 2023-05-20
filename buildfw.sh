@@ -64,12 +64,15 @@ if [ $2 == "dpkgon" ];then
     chmod 0755 $DPKG_SCRIPT_PATH/postinst
     chmod 0755 $DPKG_SCRIPT_PATH/control
     
-    dpkg-deb --build $DEB_SOURCE_PATH
-    
+    dpkg-deb --build $DEB_SOURCE_PATH   
     echo "Done building  debian-package at $DEB_SOURCE_PATH.deb"
     rm -rf $DEB_SOURCE_PATH
-fi
+    ServerIP="192.168.1.10"
+    bkup_command="-p abcd@123 scp $ $PROJECT_ROOT/BirdDog_CAM_$Version.deb anshuly@$ServerIP:/home/anshuly/tmp_fw_backup"
+    sshpass $bkup_command 
+    echo "Backing on server @$ServerIP:/home/anshuly/tmp_fw_backup"
 
-echo "Finished all successfully"
+fi
+echo "Finished all operations successfully"
 
 
