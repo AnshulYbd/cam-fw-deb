@@ -6,6 +6,8 @@ if [ $# -eq 0 ]
 fi
 
 Version=$1
+ReleaseTag=$3
+
 
 PROJECT_ROOT=`pwd`
 #echo $PROJECT_ROOT
@@ -13,7 +15,8 @@ CAM_ROOT=$PROJECT_ROOT/FW_APP_CAM
 CAM_FW_ROOT=$CAM_ROOT/firmware
 DEB_ROOT_PATH=$CAM_FW_ROOT/BirdDog_CAM_FW
 BIRDDOG_PLATFORM_FILES_PATH=$DEB_ROOT_PATH/birddog-platform-files
-DEB_SOURCE_PATH=$PROJECT_ROOT/BirdDog_CAM_$Version
+DEB_FILE_NAME=BirdDog_CAM_$Version-$ReleaseTag
+DEB_SOURCE_PATH=$PROJECT_ROOT/$DEB_FILE_NAME
 DPKG_SCRIPT_PATH=$DEB_SOURCE_PATH/DEBIAN
 
 #echo $DEB_SOURCE_PATH
@@ -68,7 +71,7 @@ if [ $2 == "dpkgon" ];then
     echo "Done building  debian-package at $DEB_SOURCE_PATH.deb"
     rm -rf $DEB_SOURCE_PATH
     ServerIP="192.168.1.10"
-    bkup_command="-p abcd@123 scp $ $PROJECT_ROOT/BirdDog_CAM_$Version.deb anshuly@$ServerIP:/home/anshuly/tmp_fw_backup"
+    bkup_command="-p abcd@123 scp $ $PROJECT_ROOT/&DEB_FILE_NAME.deb anshuly@$ServerIP:/home/anshuly/tmp_fw_backup"
     sshpass $bkup_command 
     echo "Backing on server @$ServerIP:/home/anshuly/tmp_fw_backup"
 
