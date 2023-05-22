@@ -12,7 +12,7 @@ git clone git@github.com:AnshulYbd/cam-fw-deb.git
 cd ./cam-fw-deb
 git pull origin main
 
-DEB_FOLDER_NAME=$BirdDog_CAM_$1-$4
+DEB_FOLDER_NAME=BirdDog_CAM_$1-$4
 source buildfw.sh $1 $2 $DEB_FOLDER_NAME
 
 var=$3
