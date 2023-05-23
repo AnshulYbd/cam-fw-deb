@@ -24,11 +24,14 @@ else
 fi
 
 CAMIP=$var
+DEB_PATH=$SCRIPT_DIR/cam-fw-deb
+
 echo "Deployment camera IPAddress : $CAMIP"
-command="-p bdstum01r21 scp -v -P 9031 $SCRIPT_DIR/cam-fw-deb/DEB_FOLDER_NAME.deb root@$CAMIP:/tmp"
+
+command=" -p bdstum01r21 scp -v -P 9031 $DEB_PATH/$DEB_FOLDER_NAME.deb root@$CAMIP:/tmp"
+
 #echo $command
 sshpass $command 
+
 echo "Copied to remote. $CAMIP"
-
-
 echo "Finished."
