@@ -30,7 +30,12 @@ cd $CAM_ROOT && git pull origin main
 cd $CAM_ROOT/CamApp/CamApp/
 source build_release.sh
 
-cd -
+rm -f $CAM_ROOT/CamApp/CamApp/Release/CamApp
+
+cp $CAM_ROOT/CamApp/CamApp/build_release/CamApp $CAM_ROOT/CamApp/CamApp/Release
+chmod 0755 $CAM_ROOT/CamApp/CamApp/Release/CamApp
+
+cd $PROJECT_ROOT
 #echo `pwd`
 git clone git@github.com:BirdDog-Australia/New_WEBUI.git --branch NDI-5 && git pull
 cd $PROJECT_ROOT/New_WEBUI && git pull origin NDI-5 && cd -

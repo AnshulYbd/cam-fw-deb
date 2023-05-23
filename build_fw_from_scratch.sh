@@ -8,12 +8,15 @@ echo $4
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 echo $SCRIPT_DIR
 cd $SCRIPT_DIR
-git clone git@github.com:AnshulYbd/cam-fw-deb.git
+git clone git@github.com:AnshulYbd/cam-fw-deb.git 
+
 cd ./cam-fw-deb
 git pull origin main
 
+
 DEB_FOLDER_NAME=BirdDog_CAM_$1-$4
-source buildfw.sh $1 $2 $DEB_FOLDER_NAME
+source buildfw.sh $1 $2 $DEB_FOLDER_NAME  
+
 
 var=$3
 if [ -z "$var" ]
@@ -31,7 +34,8 @@ echo "Deployment camera IPAddress : $CAMIP"
 command=" -p bdstum01r21 scp -v -P 9031 $DEB_PATH/$DEB_FOLDER_NAME.deb root@$CAMIP:/tmp"
 
 #echo $command
-sshpass $command 
+sshpass $command   
+
 
 echo "Copied to remote. $CAMIP"
 echo "Finished."
