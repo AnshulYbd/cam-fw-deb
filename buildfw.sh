@@ -25,7 +25,12 @@ DPKG_SCRIPT_PATH=$DEB_SOURCE_PATH/DEBIAN
 echo "cloning gits $CAM_FW_ROOT  "
 
 git clone git@github.com:BirdDog-Australia/FW_APP_CAM.git --branch main 
-cd $CAM_ROOT && git pull origin main && cd -
+cd $CAM_ROOT && git pull origin main 
+
+cd $CAM_ROOT/CamApp/CamApp/
+source build_release.sh
+
+cd -
 #echo `pwd`
 git clone git@github.com:BirdDog-Australia/New_WEBUI.git --branch NDI-5 && git pull
 cd $PROJECT_ROOT/New_WEBUI && git pull origin NDI-5 && cd -
