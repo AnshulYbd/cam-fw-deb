@@ -32,7 +32,10 @@ source build_release.sh
 
 rm -f $CAM_ROOT/CamApp/CamApp/Release/CamApp
 
-cp $CAM_ROOT/CamApp/CamApp/build_release/CamApp $CAM_ROOT/CamApp/CamApp/Release
+#CMAKE POST BUILD COMMAND should be copying it in Relase/ and rapp*.sh copying in firmware
+#cp $CAM_ROOT/CamApp/CamApp/build_release/CamApp $CAM_ROOT/CamApp/CamApp/Release
+#echo "******CMAKE: cp $CAM_ROOT/CamApp/CamApp/build_release/CamApp $CAM_ROOT/CamApp/CamApp/Release"
+
 chmod 0755 $CAM_ROOT/CamApp/CamApp/Release/CamApp
 
 cd $PROJECT_ROOT
