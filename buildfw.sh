@@ -30,13 +30,16 @@ cd $CAM_ROOT && git pull origin main
 cd $CAM_ROOT/CamApp/CamApp/
 source build_release.sh
 
+#remove existing binary
 rm -f $CAM_ROOT/CamApp/CamApp/Release/CamApp
-
 #CMAKE POST BUILD COMMAND should be copying it in Relase/ and rapp*.sh copying in firmware
-#cp $CAM_ROOT/CamApp/CamApp/build_release/CamApp $CAM_ROOT/CamApp/CamApp/Release
-#echo "******CMAKE: cp $CAM_ROOT/CamApp/CamApp/build_release/CamApp $CAM_ROOT/CamApp/CamApp/Release"
+chmod 0755 $CAM_ROOT/CamApp/CamApp/build_release/CamApp
+cp $CAM_ROOT/CamApp/CamApp/build_release/CamApp $CAM_ROOT/CamApp/CamApp/Release
+#deleting original binary so that next time cmake triggers the quick-build and recopy the binary in post build
+rm -f $CAM_ROOT/CamApp/CamApp/build_release/CamApp
 
-chmod 0755 $CAM_ROOT/CamApp/CamApp/Release/CamApp
+
+
 
 cd $PROJECT_ROOT
 #echo `pwd`
